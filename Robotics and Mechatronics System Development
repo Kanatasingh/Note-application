@@ -1,0 +1,351 @@
+import RPi.GPIO as GPIO
+import time
+import lcd
+from gpiozero import DistanceSensor
+# Pin for the status LED
+status_LED = 19
+# Setup the GPIO mode
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+# Configure the pin as an output
+GPIO.setup(status_LED, GPIO.OUT)
+GPIO.output(status_LED,GPIO.HIGH)
+pin1 = GPIO.PWM(status_LED,500)
+# Start PWM with an initial duty cycle of 40% 
+pin1.start(100)
+
+try:
+    lcd.lcd_init()
+
+    time.sleep(1)
+
+    #Print Hello to LCD then clear it
+    lcd.printer("Hello","")
+    time.sleep(2)
+    lcd.printer("","")
+except KeyboardInterrupt:
+    pass
+GPIO.cleanup()
+
+from gpiozero import PWMLED
+led1 = PWMLED(12)
+led2 = PWMLED(26)
+
+for _ in range(1):
+    try:
+        intensity = float(input("Enter headlight intensity (0-100): ")) / 100
+        if 0 <= intensity <= 1:
+            led1.value = intensity
+            led2.value = intensity
+        else:
+            print("Please enter a value between 0 and 100. ")
+    except ValueError:
+        print("Invalid input. ")
+
+# Set up the GPIO mode 
+GPIO.setmode(GPIO.BCM) 
+GPIO.setwarnings(False)
+buzzer_pin = 16
+# Set the buzzer pin as an output 
+GPIO.setup(buzzer_pin, GPIO.OUT) 
+pin = GPIO.PWM(buzzer_pin, 500)
+pin.start(50)
+time.sleep(2)
+pin.stop(16)
+
+
+try:
+    lcd.lcd_init()
+
+    time.sleep(1)
+
+    #Print Hello to LCD then clear it
+    lcd.printer("Moving Forward","")
+    time.sleep(2)
+    lcd.printer("","")
+except KeyboardInterrupt:
+    pass
+status_headlights = [12, 26]
+# Setup the GPIO mode
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+# Configure the pin as an output
+GPIO.setup(status_headlights, GPIO.OUT)
+# Turn ON the status LED
+GPIO.output(status_headlights,GPIO.HIGH)
+
+mode=GPIO.getmode()
+# Define motor control pins
+motor1_forward = 5
+motor1_backward = 0
+motor2_forward = 7
+motor2_backward = 6
+sleeptime=1 # Define sleep time for how long the motors will run
+# Setup GPIO mode
+GPIO.setmode(GPIO.BCM) 
+# Configure motor pins as outputs
+GPIO.setup(motor1_forward, GPIO.OUT)
+GPIO.setup(motor2_forward, GPIO.OUT)
+GPIO.setup(motor1_backward, GPIO.OUT)
+GPIO.setup(motor2_backward, GPIO.OUT)
+# Cleanup function to reset pins after running the motors
+def cleanup():
+    GPIO.output(motor1_forward, GPIO.LOW)
+    GPIO.output(motor2_forward, GPIO.LOW)
+    GPIO.output(motor1_backward, GPIO.LOW)
+    GPIO.output(motor2_backward, GPIO.LOW)
+    GPIO.cleanup()
+# Function to move the robot forward
+def forward(x):
+# Activate forward pins
+ GPIO.output(motor1_forward, GPIO.HIGH)
+ GPIO.output(motor2_forward, GPIO.HIGH)
+ time.sleep(x)
+ # Turn off the motors after moving
+ GPIO.output(motor1_forward, GPIO.LOW)
+ GPIO.output(motor2_forward, GPIO.LOW)
+try:
+# Move forward for 4 seconds
+ forward(4)
+ # If the program is interrupted, clean up GPIO settings 
+except KeyboardInterrupt:
+ GPIO.cleanup()
+ exit(1) 
+# Cleanup after the program finishes
+
+out1 = 17
+out2 = 22
+out3 = 27
+out4 = 10
+# Define the time between each step (in seconds) and the number of steps.
+step_sleep = 0.02
+step_count = 100
+# Setting up
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(out1,GPIO.OUT)
+GPIO.setup(out2,GPIO.OUT)
+GPIO.setup(out3,GPIO.OUT)
+GPIO.setup(out4,GPIO.OUT)
+# Initializing
+GPIO.output(out1, GPIO.LOW)
+GPIO.output(out2, GPIO.LOW)
+GPIO.output(out3, GPIO.LOW)
+GPIO.output(out4, GPIO.LOW)
+def cleanup():
+    GPIO.output(out1, GPIO.LOW)
+    GPIO.output(out2, GPIO.LOW)
+    GPIO.output(out3, GPIO.LOW)
+    GPIO.output(out4, GPIO.LOW)
+    GPIO.cleanup()
+try:
+    i = 0
+    for i in range (step_count):
+# This pattern energizes the motor coils in sequence to make it step.
+        if i%4==0:
+            GPIO.output(out4, GPIO.HIGH)
+            GPIO.output(out3, GPIO.LOW)
+            GPIO.output(out2, GPIO.HIGH)
+            GPIO.output(out1, GPIO.LOW)
+        elif i%4==1:
+            GPIO.output(out4, GPIO.LOW)
+            GPIO.output(out3, GPIO.LOW)
+            GPIO.output(out2, GPIO.HIGH)
+            GPIO.output(out1, GPIO.HIGH)
+        elif i%4==2:
+            GPIO.output(out4, GPIO.LOW)
+            GPIO.output(out3, GPIO.HIGH)
+            GPIO.output(out2, GPIO.LOW)
+            GPIO.output(out1, GPIO.HIGH)
+        elif i%4==3:
+            GPIO.output(out4, GPIO.HIGH)
+            GPIO.output(out3, GPIO.HIGH)
+            GPIO.output(out2, GPIO.LOW)
+            GPIO.output(out1, GPIO.LOW)
+        time.sleep(step_sleep)
+except KeyboardInterrupt:
+     GPIO.cleanup()
+     exit(1)
+
+# Initialize the DistanceSensor with the echo pin set to GPIO 24 and the trigger pin set to GPIO 23.
+ultrasonic = DistanceSensor(echo=24, trigger=23)
+# Continuously measure the distance.
+start_time = time.time()
+while time.time() - start_time < 5:
+    # Print the measured distance to the console.
+    distance = ultrasonic.distance
+    lcd.printer("distance: ","")
+    lcd.printer(f"{distance} cm","")
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(21, GPIO.OUT)
+    servo = GPIO.PWM(21,50)
+    # Start the PWM with an initial duty cycle of 0% (servo remains in its default position)
+    servo.start(0)
+    # Move the servo to a specific position by changing the duty cycle to 5%
+    servo.ChangeDutyCycle(5)
+    time.sleep(1)
+    # Change the duty cycle to 12% to move the servo to another position
+    servo.ChangeDutyCycle(12)
+    time.sleep(1)
+    # Stop the PWM and clean up the GPIO pins
+    servo.stop()
+    
+GPIO.cleanup()
+try:
+    lcd.lcd_init()
+
+    time.sleep(1)
+
+ #Print Hello to LCD then clear it
+    lcd.printer("Pause","")
+    time.sleep(5)
+    lcd.printer("","")
+except KeyboardInterrupt:
+    pass
+
+buzzer = 16
+# Setup the GPIO mode
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(16, GPIO.OUT)
+GPIO.setwarnings(False)   
+pin1 = GPIO.PWM(buzzer,200)
+# Start PWM with an initial duty cycle of 40% 
+pin1.start(70)
+# Keep the buzzer at 40% for 2 seconds
+time.sleep(2)
+pin1.stop() # Stop the PWM
+GPIO.cleanup()
+
+try:
+    lcd.lcd_init()
+
+    time.sleep(1)
+
+ #Print Hello to the LCD then clear it
+    lcd.printer("Moving Backwards","")
+    time.sleep(2)
+    lcd.printer("","")
+except KeyboardInterrupt:
+    pass
+status_LED = 19
+# Setup the GPIO mode
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(19, GPIO.OUT)
+GPIO.setwarnings(False)
+# Initializing PWM, the frequency of the PWM signal in Hertz (500 Hz in this case).
+pin1 = GPIO.PWM(status_LED,500)
+# Start PWM with an initial duty cycle of 40% 
+pin1.start(100)
+time.sleep(2)
+# Change the duty cycle to 90% to increase brightness
+pin1.start(90)
+# Keep the LED at 90% brightness for 2 seconds
+time.sleep(2)
+
+mode=GPIO.getmode()
+# Defines pins that control the motor
+motor1_forward = 5
+motor1_backward = 0
+motor2_forward = 7
+motor2_backward = 6
+sleeptime=1 # Define sleep time for how long the motors will run
+# Setup GPIO mode
+GPIO.setmode(GPIO.BCM) 
+# Configure motor pins as outputs
+GPIO.setup(motor1_forward, GPIO.OUT)
+GPIO.setup(motor2_forward, GPIO.OUT)
+GPIO.setup(motor1_backward, GPIO.OUT)
+GPIO.setup(motor2_backward, GPIO.OUT)
+# Cleanup function to reset the pins after running the motors
+def cleanup():
+    GPIO.output(motor1_forward, GPIO.LOW)
+    GPIO.output(motor2_forward, GPIO.LOW)
+    GPIO.output(motor1_backward, GPIO.LOW)
+    GPIO.output(motor2_backward, GPIO.LOW)
+    GPIO.cleanup()
+# Function to move the robot forward
+def backward(x):
+# Activates the forward pins
+ GPIO.output(motor1_backward, GPIO.HIGH)
+ GPIO.output(motor2_backward, GPIO.HIGH)
+ print("Moving Backward")
+ time.sleep(x)
+ # Turn off the motors after moving
+ GPIO.output(motor1_backward, GPIO.LOW)
+ GPIO.output(motor2_backward, GPIO.LOW)
+try:
+# Moves forward for 2 seconds
+ backward(4)
+ # If the program is interrupted, clean up GPIO settings 
+except KeyboardInterrupt:
+ GPIO.cleanup()
+ exit(1) 
+GPIO.cleanup()
+
+try:
+    lcd.lcd_init()
+
+    time.sleep(1)
+
+ #Print Hello on the LCD and then clear it
+    lcd.printer("Turning Right","")
+    time.sleep(2)
+    lcd.printer("","")
+except KeyboardInterrupt:
+    pass
+motor1_forward = 5
+# Setup GPIO mode
+GPIO.setmode(GPIO.BCM) 
+# Configure motor pins as outputs
+GPIO.setup(motor1_forward, GPIO.OUT)
+def turn_right(x):
+# Activate the forward pins
+ GPIO.output(motor1_forward, GPIO.HIGH)
+ time.sleep(x)
+ # Turn off the motors after moving
+ GPIO.output(motor1_forward, GPIO.LOW)
+try:
+# Move forward for 4 seconds
+ turn_right(2)
+except KeyboardInterrupt:
+ pass
+
+try:
+    lcd.lcd_init()
+
+    time.sleep(1)
+
+ #Print Hello on the LCD and then clear it
+    lcd.printer("Turning Left","")
+    time.sleep(2)
+    lcd.printer("","")
+except KeyboardInterrupt:
+    pass
+motor2_forward = 7
+# Setup GPIO mode
+GPIO.setmode(GPIO.BCM) 
+# Configure motor pins as outputs
+GPIO.setup(motor2_forward, GPIO.OUT)
+def turn_left(x):
+# Activate theforward pins
+ GPIO.output(motor2_forward, GPIO.HIGH)
+ time.sleep(x)
+ # Turn off the motors after moving
+ GPIO.output(motor2_forward, GPIO.LOW)
+try:
+# Moves forward for 4 seconds
+ turn_left(2)
+except KeyboardInterrupt:
+     pass
+try:
+    lcd.lcd_init()
+
+    time.sleep(1)
+
+ #Print Hello to LCD, then clear it
+    lcd.printer("Goodbye","")
+    time.sleep(2)
+    lcd.printer("","")
+except KeyboardInterrupt:
+ GPIO.cleanup()
+ exit(1) 
+GPIO.cleanup()
